@@ -72,6 +72,7 @@ post '/projects' do
   end
 end
 
+# ATTACHMENTS
 post '/projects/:project_id/attachments' do
     content_type :json
     return status 401 unless current_user
@@ -79,47 +80,49 @@ post '/projects/:project_id/attachments' do
     attachment = Attachment.create(project_id: params[:project_id], filename: params[:filename], format: extension)
     status 201
     attachment.to_h.to_json
-    end
-    
-    post '/projects/:project_id/threads' do
+  end
+  
+  # THREADS
+  post '/projects/:project_id/threads' do
     content_type :json
     return status 401 unless current_user
     project = Project.find(params[:project_id])
     if project && project.user_id == current_user.id
-    thread = ThreadModel.create(project_id: params[:project_id], title: params[:title], content: params[:content])
-    status 201
-    thread.to_h.to_json
+      thread = ThreadModel.create(project_id: params[:project_id], title: params[:title], content: params[:content])
+      status 201
+      thread.to_h.to_json
     else
-    status 403
-    { error: "Access Denied" }.to_json
+      status 403
+      { error: "Access Denied: You are not the owner of this project." }.to_json
     end
-    end
-    
-    get '/projects/:project_id/threads' do
+  end
+  
+  get '/projects/:project_id/threads' do
     content_type :json
     threads = ThreadModel.find_by_project(params[:project_id])
     threads.map(&:to_h).to_json
-    end
-    
-    post '/projects/:project_id/threads/:thread_id/messages' do
+  end
+  
+  # MESSAGES
+  post '/projects/:project_id/threads/:thread_id/messages' do
     content_type :json
     return status 401 unless current_user
     message = Message.create(thread_id: params[:thread_id], user_id: current_user.id, content: params[:content])
     status 201
     message.to_h.to_json
-    end
-    
-    get '/projects/:project_id/threads/:thread_id' do
+  end
+  
+  get '/projects/:project_id/threads/:thread_id' do
     content_type :json
     thread = ThreadModel.find(params[:thread_id])
     messages = Message.find_by_thread(params[:thread_id])
     if thread
-    { thread: thread.to_h, replies: messages.map(&:to_h) }.to_json
+      { thread: thread.to_h, replies: messages.map(&:to_h) }.to_json
     else
-    status 404
+      status 404
+      { error: "Thread not found" }.to_json
     end
-    end
-
+  end
 # --- Views ---
 
 get '/' do

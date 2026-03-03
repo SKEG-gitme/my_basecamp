@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title><%= @project.name %></title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; display: flex; gap: 40px; }
+        .main { flex: 3; }
+        .sidebar { flex: 1; background: #eee; padding: 20px; border-radius: 8px; }
+        .thread-item { border-bottom: 1px solid #ccc; padding: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <a href="/">← Back to Dashboard</a>
+        <h1><%= @project.name %></h1>
+        
+        <h3>Discussions</h3>
+        <% @threads.each do |thread| %>
+            <div class="thread-item">
+                <a href="/projects/<%= @project.id %>/threads/<%= thread.id %>">
+                    <strong><%= thread.title %></strong>
+                </a>
+            </div>
+        <% end %>
+
+        <hr>
+        <h4>Start a New Topic</h4>
+        <form action="/projects/<%= @project.id %>/threads" method="POST">
+            <input type="text" name="title" placeholder="Thread Title" required><br><br>
+            <textarea name="content" placeholder="Initial message..."></textarea><br>
+            <button type="submit">Create Thread</button>
+        </form>
+    </div>
+
+    <div class="sidebar">
+        <h3>Files</h3>
+        <ul>
+            <% @attachments.each do |file| %>
+                <li><%= file.filename %> (<%= file.format %>)</li>
+            <% end %>
+        </ul>
+    </div>
+</body>
+</html>

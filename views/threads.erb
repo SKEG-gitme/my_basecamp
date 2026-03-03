@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title><%= @thread.title %></title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; }
+        .message { background: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 5px; }
+        .meta { font-size: 0.8em; color: #666; }
+        textarea { width: 100%; height: 80px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <a href="/projects/<%= @thread.project_id %>">← Back to Project</a>
+    
+    <h1><%= @thread.title %></h1>
+    <div class="message" style="background: #e8f4fd;">
+        <p><%= @thread.content %></p>
+    </div>
+
+    <h3>Replies</h3>
+    <% @messages.each do |msg| %>
+        <div class="message">
+            <div class="meta">User ID: <%= msg.user_id %></div>
+            <p><%= msg.content %></p>
+        </div>
+    <% end %>
+
+    <form action="/projects/<%= @thread.project_id %>/threads/<%= @thread.id %>/messages" method="POST">
+        <textarea name="content" placeholder="Add a comment..." required></textarea><br>
+        <button type="submit">Post Reply</button>
+    </form>
+</body>
+</html>

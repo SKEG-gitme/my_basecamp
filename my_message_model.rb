@@ -10,6 +10,15 @@ class Message
     @content = attributes['content']
   end
 
+  def to_h
+    {
+      id: @id,
+      thread_id: @thread_id,
+      user_id: @user_id,
+      content: @content
+    }
+  end
+
   def self.connect
     db = SQLite3::Database.new 'my_basecamp.db'
     db.results_as_hash = true
@@ -31,6 +40,13 @@ class Message
     db.execute("INSERT INTO messages (thread_id, user_id, content) VALUES (?, ?, ?)",
                [params[:thread_id], params[:user_id], params[:content]])
     self.find(db.last_insert_row_id)
+  end
+
+  def self.find(id)
+    db = self.connect
+    row = db.execute("SELECT * FROM messages WHERE id = ?", [id]).first
+    return nil unless row
+    Message.new(row)
   end
 
   def self.find_by_thread(thread_id)
