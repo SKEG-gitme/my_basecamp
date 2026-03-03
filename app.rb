@@ -1,7 +1,10 @@
 require 'sinatra'
 require 'json'
 require_relative 'my_user_model'
-require_relative 'my_project_model' # Add the project model!
+require_relative 'my_project_model'
+require_relative 'my_attachment_model'
+require_relative 'my_thread_model'
+require_relative 'my_message_model'
 
 set :port, 8080
 set :bind, '0.0.0.0'
@@ -60,7 +63,6 @@ end
 post '/projects' do
   content_type :json
   if current_user
-    # Add the current user's ID as the project owner (Admin)
     project_data = params.merge(user_id: current_user.id)
     project = Project.create(project_data)
     status 201
@@ -69,6 +71,54 @@ post '/projects' do
     status 401
   end
 end
+
+post '/projects/:project_id/attachments' do
+    content_type :json
+    return status 401 unless current_user
+    extension = File.extname(params[:filename]).delete('.')
+    attachment = Attachment.create(project_id: params[:project_id], filename: params[:filename], format: extension)
+    status 201
+    attachment.to_h.to_json
+    end
+    
+    post '/projects/:project_id/threads' do
+    content_type :json
+    return status 401 unless current_user
+    project = Project.find(params[:project_id])
+    if project && project.user_id == current_user.id
+    thread = ThreadModel.create(project_id: params[:project_id], title: params[:title], content: params[:content])
+    status 201
+    thread.to_h.to_json
+    else
+    status 403
+    { error: "Access Denied" }.to_json
+    end
+    end
+    
+    get '/projects/:project_id/threads' do
+    content_type :json
+    threads = ThreadModel.find_by_project(params[:project_id])
+    threads.map(&:to_h).to_json
+    end
+    
+    post '/projects/:project_id/threads/:thread_id/messages' do
+    content_type :json
+    return status 401 unless current_user
+    message = Message.create(thread_id: params[:thread_id], user_id: current_user.id, content: params[:content])
+    status 201
+    message.to_h.to_json
+    end
+    
+    get '/projects/:project_id/threads/:thread_id' do
+    content_type :json
+    thread = ThreadModel.find(params[:thread_id])
+    messages = Message.find_by_thread(params[:thread_id])
+    if thread
+    { thread: thread.to_h, replies: messages.map(&:to_h) }.to_json
+    else
+    status 404
+    end
+    end
 
 # --- Views ---
 

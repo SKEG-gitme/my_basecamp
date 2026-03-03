@@ -26,7 +26,6 @@ class Project
     db
   end
 
-  # Create a project and associate it with a user_id (The Admin)
   def self.create(params)
     db = self.connect
     db.execute(
