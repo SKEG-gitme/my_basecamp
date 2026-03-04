@@ -55,3 +55,16 @@ class Message
     rows.map { |row| Message.new(row) }
   end
 end
+
+def update(params)
+    db = Message.connect
+    db.execute("UPDATE messages SET content = ? WHERE id = ?", [params[:content], @id])
+    @content = params[:content] # Update the object in memory too
+    self
+  end
+
+  # This is the class method for #destroy
+  def self.destroy(id)
+    db = self.connect
+    db.execute("DELETE FROM messages WHERE id = ?", [id])
+  end

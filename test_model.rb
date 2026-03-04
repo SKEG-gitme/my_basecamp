@@ -40,3 +40,19 @@ all_messages = Message.find_by_thread(thread.id)
 
 puts "Project ID #{project.id} has #{all_threads.length} threads."
 puts "Thread ID #{thread.id} has #{all_messages.length} messages."
+
+# Clear old data if needed, then create a fresh test user
+User.create(
+  firstname: "Test",
+  lastname: "User",
+  email: "admin@test.com",
+  password: "password123",
+  age: 25
+)
+
+# Also create a project for this user so the dashboard isn't empty!
+Project.create(
+  name: "Test Project",
+  description: "Checking if the dashboard works",
+  user_id: 1 # Assuming this is the ID of the user above
+)

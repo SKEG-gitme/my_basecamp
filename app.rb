@@ -1,4 +1,5 @@
 require 'sinatra'
+# require 'sinatra/reloader' if development?
 require 'json'
 require_relative 'my_user_model'
 require_relative 'my_project_model'
@@ -6,127 +7,149 @@ require_relative 'my_attachment_model'
 require_relative 'my_thread_model'
 require_relative 'my_message_model'
 
-set :port, 8080
+set :port, ENV['PORT'] || 8080
 set :bind, '0.0.0.0'
-enable :sessions # This replaces all that manual cookie code
+enable :sessions 
 
 helpers do
   def current_user
     @current_user ||= User.find(session[:user_id]) if session[:user_id]
   end
 
-  def clean_user(user)
-    return nil unless user
-    { id: user.id, firstname: user.firstname, lastname: user.lastname, age: user.age, email: user.email }
+  def authenticate!
+    redirect '/login' unless current_user
   end
 end
 
-# --- User Routes ---
+# --- User & Authentication Routes ---
 
-get '/users' do
-  content_type :json
-  User.all.map { |u| clean_user(u) }.to_json
-end
-
-post '/users' do
-  content_type :json
-  user = User.create(params)
-  status 201
-  clean_user(user).to_json
+get '/login' do
+  erb :login
 end
 
 post '/sign_in' do
-  content_type :json
   user = User.find_by_email(params[:email])
   
   if user && user.password == params[:password]
-    session[:user_id] = user.id # Standard Sinatra session
-    clean_user(user).to_json
+    session[:user_id] = user.id
+    redirect '/'
   else
-    status 401
-    { error: "Invalid credentials" }.to_json
+    @error = "Invalid credentials"
+    erb :login
   end
 end
 
-delete '/sign_out' do
+get '/sign_out' do
   session.clear
-  status 204
+  redirect '/login'
 end
 
-# --- Project Routes ---
+# --- Project Routes (The Views) ---
 
-get '/projects' do
-  content_type :json
-  Project.all.to_json
+# DASHBOARD
+get '/' do
+  authenticate!
+  @projects = Project.find_by_user(current_user.id)
+  erb :index
 end
 
-post '/projects' do
-  content_type :json
-  if current_user
-    project_data = params.merge(user_id: current_user.id)
-    project = Project.create(project_data)
-    status 201
-    project.to_json
+# PROJECT HUB
+get '/projects/:project_id' do
+  authenticate!
+  @project = Project.find(params[:project_id])
+  
+  if @project && @project.user_id == current_user.id
+    @threads = ThreadModel.find_by_project(params[:project_id])
+    @attachments = Attachment.find_by_project(params[:project_id])
+    erb :project
   else
-    status 401
+    status 403
+    "Access Denied: You do not own this project."
   end
 end
+
+# THREAD VIEW
+get '/projects/:project_id/threads/:thread_id' do
+  authenticate!
+  @thread = ThreadModel.find(params[:thread_id])
+  @messages = Message.find_by_thread(params[:thread_id])
+  
+  if @thread
+    erb :thread
+  else
+    status 404
+    "Thread not found"
+  end
+end
+
+# --- Action Routes (Form Submissions) ---
+
+# CREATE THREAD
+post '/projects/:project_id/threads' do
+  authenticate!
+  project = Project.find(params[:project_id])
+  
+  if project && project.user_id == current_user.id
+    ThreadModel.create(
+      project_id: params[:project_id], 
+      title: params[:title], 
+      content: params[:content]
+    )
+    redirect "/projects/#{params[:project_id]}"
+  else
+    status 403
+  end
+end
+
+# POST MESSAGE
+post '/projects/:project_id/threads/:thread_id/messages' do
+  authenticate!
+  Message.create(
+    thread_id: params[:thread_id], 
+    user_id: current_user.id, 
+    content: params[:content]
+  )
+  redirect "/projects/#{params[:project_id]}/threads/#{params[:thread_id]}"
+end
+
+# EDIT MESSAGE (Show the form)
+get '/projects/:project_id/threads/:thread_id/messages/:id/edit' do
+    authenticate!
+    @message = Message.find(params[:id])
+    # Security: Only the owner can edit
+    halt 403, "Not your message!" unless @message.user_id == current_user.id
+    erb :edit_message
+  end
+  
+  # UPDATE MESSAGE (Process the change)
+  post '/projects/:project_id/threads/:thread_id/messages/:id' do
+    authenticate!
+    message = Message.find(params[:id])
+    if message.user_id == current_user.id
+      message.update(content: params[:content]) # Assumes your model has #update
+      redirect "/projects/#{params[:project_id]}/threads/#{params[:thread_id]}"
+    end
+  end
+  
+  # DELETE MESSAGE
+  post '/projects/:project_id/threads/:thread_id/messages/:id/delete' do
+    authenticate!
+    message = Message.find(params[:id])
+    # Allow author OR project owner to delete
+    if message.user_id == current_user.id
+      Message.destroy(params[:id])
+    end
+    redirect "/projects/#{params[:project_id]}/threads/#{params[:thread_id]}"
+  end
 
 # ATTACHMENTS
 post '/projects/:project_id/attachments' do
-    content_type :json
-    return status 401 unless current_user
-    extension = File.extname(params[:filename]).delete('.')
-    attachment = Attachment.create(project_id: params[:project_id], filename: params[:filename], format: extension)
-    status 201
-    attachment.to_h.to_json
-  end
-  
-  # THREADS
-  post '/projects/:project_id/threads' do
-    content_type :json
-    return status 401 unless current_user
-    project = Project.find(params[:project_id])
-    if project && project.user_id == current_user.id
-      thread = ThreadModel.create(project_id: params[:project_id], title: params[:title], content: params[:content])
-      status 201
-      thread.to_h.to_json
-    else
-      status 403
-      { error: "Access Denied: You are not the owner of this project." }.to_json
-    end
-  end
-  
-  get '/projects/:project_id/threads' do
-    content_type :json
-    threads = ThreadModel.find_by_project(params[:project_id])
-    threads.map(&:to_h).to_json
-  end
-  
-  # MESSAGES
-  post '/projects/:project_id/threads/:thread_id/messages' do
-    content_type :json
-    return status 401 unless current_user
-    message = Message.create(thread_id: params[:thread_id], user_id: current_user.id, content: params[:content])
-    status 201
-    message.to_h.to_json
-  end
-  
-  get '/projects/:project_id/threads/:thread_id' do
-    content_type :json
-    thread = ThreadModel.find(params[:thread_id])
-    messages = Message.find_by_thread(params[:thread_id])
-    if thread
-      { thread: thread.to_h, replies: messages.map(&:to_h) }.to_json
-    else
-      status 404
-      { error: "Thread not found" }.to_json
-    end
-  end
-# --- Views ---
-
-get '/' do
-  @users = User.all
-  @projects = Project.all
-  erb :index
+  authenticate!
+  extension = File.extname(params[:filename]).delete('.')
+  Attachment.create(
+    project_id: params[:project_id], 
+    filename: params[:filename], 
+    format: extension
+  )
+  redirect "/projects/#{params[:project_id]}"
 end
