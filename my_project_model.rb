@@ -48,6 +48,12 @@ class Project
     row ? Project.new(row) : nil
   end
 
+  def self.find_by_user(user_id)
+    db = self.connect
+    rows = db.execute("SELECT * FROM projects WHERE user_id = ?", [user_id])
+    rows.map { |row| Project.new(row) }
+  end
+
   def self.update(id, field, value)
     db = self.connect
     db.execute("UPDATE projects SET #{field} = ? WHERE id = ?", [value, id])
