@@ -9,7 +9,22 @@ require_relative 'my_message_model'
 
 set :port, ENV['PORT'] || 8080
 set :bind, '0.0.0.0'
-enable :sessions 
+enable :sessions
+
+begin
+    # This creates the user you will use to log in
+    User.create({
+      firstname: "Skeg", 
+      lastname: "Admin", 
+      age: 25, 
+      email: "skeg@test.com", 
+      password: "password123"
+    })
+    puts "SUCCESS: User skeg@test.com created!"
+  rescue => e
+    # If the user already exists, it just skips this part
+    puts "Notice: Seed skipped (User probably already exists)"
+  end
 
 helpers do
   def current_user
