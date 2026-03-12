@@ -2,8 +2,9 @@
 ***
 Use this URL to directly access the rendered project [ https://my-basecamp-5c76.onrender.com]
 ## For login:
+(DO NOT DISCLOSE)
 email: "skeg@test.com", 
-password: "password123"
+      password: "password123"
 
 ## Task
 The Problem: The goal was to build a simplified version of "Basecamp," a project management tool. 

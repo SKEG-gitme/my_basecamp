@@ -47,7 +47,7 @@ end
 
   def self.find_by_email(email)
     db = self.connect
-    row = db.execute("SELECT * FROM users WHERE email = ?", email).first
+    row = db.execute("SELECT * FROM users WHERE email = ?", [email]).first
     row ? User.new(row) : nil
   end
 
