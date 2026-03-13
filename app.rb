@@ -57,6 +57,29 @@ end
 get '/sign_out' do
   session.clear
   redirect '/login'
+
+get '/signup' do
+    erb :signup
+  end
+  
+  # Process the Sign Up form
+  post '/users' do
+    user = User.create({
+      firstname: params[:firstname],
+      lastname: params[:lastname],
+      email: params[:email],
+      password: params[:password],
+      age: params[:age]
+    })
+    
+    if user
+      session[:user_id] = user.id
+      redirect '/'
+    else
+      @error = "Could not create account."
+      erb :signup
+    end
+  end
 end
 
 # --- Project Routes (The Views) ---
