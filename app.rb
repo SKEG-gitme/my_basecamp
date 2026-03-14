@@ -12,19 +12,19 @@ set :bind, '0.0.0.0'
 enable :sessions
 
 begin
-    # This creates the user you will use to log in
-    User.create({
-      firstname: "Skeg", 
-      lastname: "Admin", 
-      age: 25, 
-      email: "skeg@test.com", 
-      password: "password123"
-    })
-    puts "SUCCESS: User skeg@test.com created!"
-  rescue => e
-    # If the user already exists, it just skips this part
-    puts "Notice: Seed skipped (User probably already exists)"
-  end
+  # This creates the user you will use to log in
+  User.create({
+    firstname: "Skeg", 
+    lastname: "Admin", 
+    age: 25, 
+    email: "skeg@test.com", 
+    password: "password123"
+  })
+  puts "SUCCESS: User skeg@test.com created!"
+rescue => e
+  # If the user already exists, it just skips this part
+  puts "Notice: Seed skipped (User probably already exists)"
+end
 
 helpers do
   def current_user
@@ -57,28 +57,28 @@ end
 get '/sign_out' do
   session.clear
   redirect '/login'
+end # <--- FIXED: Added missing end here
 
 get '/signup' do
-    erb :signup
-  end
+  erb :signup
+end
+
+# Process the Sign Up form
+post '/users' do
+  user = User.create({
+    firstname: params[:firstname],
+    lastname: params[:lastname],
+    email: params[:email],
+    password: params[:password],
+    age: params[:age]
+  })
   
-  # Process the Sign Up form
-  post '/users' do
-    user = User.create({
-      firstname: params[:firstname],
-      lastname: params[:lastname],
-      email: params[:email],
-      password: params[:password],
-      age: params[:age]
-    })
-    
-    if user
-      session[:user_id] = user.id
-      redirect '/'
-    else
-      @error = "Could not create account."
-      erb :signup
-    end
+  if user
+    session[:user_id] = user.id
+    redirect '/'
+  else
+    @error = "Could not create account."
+    erb :signup
   end
 end
 
@@ -152,33 +152,32 @@ end
 
 # EDIT MESSAGE (Show the form)
 get '/projects/:project_id/threads/:thread_id/messages/:id/edit' do
-    authenticate!
-    @message = Message.find(params[:id])
-    # Security: Only the owner can edit
-    halt 403, "Not your message!" unless @message.user_id == current_user.id
-    erb :edit_message
-  end
-  
-  # UPDATE MESSAGE (Process the change)
-  post '/projects/:project_id/threads/:thread_id/messages/:id' do
-    authenticate!
-    message = Message.find(params[:id])
-    if message.user_id == current_user.id
-      message.update(content: params[:content]) # Assumes your model has #update
-      redirect "/projects/#{params[:project_id]}/threads/#{params[:thread_id]}"
-    end
-  end
-  
-  # DELETE MESSAGE
-  post '/projects/:project_id/threads/:thread_id/messages/:id/delete' do
-    authenticate!
-    message = Message.find(params[:id])
-    # Allow author OR project owner to delete
-    if message.user_id == current_user.id
-      Message.destroy(params[:id])
-    end
+  authenticate!
+  @message = Message.find(params[:id])
+  # Security: Only the owner can edit
+  halt 403, "Not your message!" unless @message.user_id == current_user.id
+  erb :edit_message
+end
+
+# UPDATE MESSAGE (Process the change)
+post '/projects/:project_id/threads/:thread_id/messages/:id' do
+  authenticate!
+  message = Message.find(params[:id])
+  if message.user_id == current_user.id
+    message.update(content: params[:content]) 
     redirect "/projects/#{params[:project_id]}/threads/#{params[:thread_id]}"
   end
+end
+
+# DELETE MESSAGE
+post '/projects/:project_id/threads/:thread_id/messages/:id/delete' do
+  authenticate!
+  message = Message.find(params[:id])
+  if message.user_id == current_user.id
+    Message.destroy(params[:id])
+  end
+  redirect "/projects/#{params[:project_id]}/threads/#{params[:thread_id]}"
+end
 
 # ATTACHMENTS
 post '/projects/:project_id/attachments' do

@@ -4,13 +4,14 @@ class User
   attr_accessor :id, :firstname, :lastname, :age, :email, :password
 
   def initialize(attributes = {})
-    @id = attributes['id']
-    @firstname = attributes['firstname']
-    @lastname = attributes['lastname']
-    @age = attributes['age']
-    @email = attributes['email']
-    @password = attributes['password']
-    @is_admin = attributes['is_admin'] || 0
+    # This change allows it to read :firstname OR "firstname"
+    @id = attributes['id'] || attributes[:id]
+    @firstname = attributes['firstname'] || attributes[:firstname]
+    @lastname = attributes['lastname'] || attributes[:lastname]
+    @age = attributes['age'] || attributes[:age]
+    @email = attributes['email'] || attributes[:email]
+    @password = attributes['password'] || attributes[:password]
+    @is_admin = attributes['is_admin'] || attributes[:is_admin] || 0
   end
 
   def self.connect

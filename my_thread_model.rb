@@ -4,11 +4,11 @@ class ThreadModel
   attr_accessor :id, :project_id, :title, :content
 
   def initialize(attributes = {})
-    @id = attributes['id']
-    @project_id = attributes['project_id']
-    @title = attributes['title']
-    @content = attributes['content']
-  end
+  @id         = attributes['id']         || attributes[:id]
+  @project_id = attributes['project_id'] || attributes[:project_id]
+  @title      = attributes['title']      || attributes[:title]
+  @content    = attributes['content']    || attributes[:content]
+end
 
   def self.connect
     db = SQLite3::Database.new 'my_basecamp.db'

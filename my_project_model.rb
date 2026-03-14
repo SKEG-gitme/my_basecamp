@@ -4,10 +4,10 @@ class Project
   attr_accessor :id, :name, :description, :user_id
 
   def initialize(attributes = {})
-    @id = attributes['id']
-    @name = attributes['name']
-    @description = attributes['description']
-    @user_id = attributes['user_id'] # This connects the project to the owner (User)
+    @id          = attributes['id']          || attributes[:id]
+    @name        = attributes['name']        || attributes[:name]
+    @description = attributes['description'] || attributes[:description]
+    @user_id     = attributes['user_id']     || attributes[:user_id]
   end
 
   def self.connect

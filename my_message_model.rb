@@ -4,10 +4,10 @@ class Message
   attr_accessor :id, :thread_id, :user_id, :content
 
   def initialize(attributes = {})
-    @id = attributes['id']
-    @thread_id = attributes['thread_id']
-    @user_id = attributes['user_id']
-    @content = attributes['content']
+    @id        = attributes['id']        || attributes[:id]
+    @thread_id = attributes['thread_id'] || attributes[:thread_id]
+    @user_id   = attributes['user_id']   || attributes[:user_id]
+    @content   = attributes['content']   || attributes[:content]
   end
 
   def to_h
