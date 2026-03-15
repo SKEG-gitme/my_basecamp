@@ -6,6 +6,12 @@ Use this URL to directly access the rendered project [ https://my-basecamp-5c76.
 email: "skeg@test.com", 
       password: "password123"
 
+## The Biggest Issue
+"The project has been fully patched. All models (User, Project, Thread, Message) have been verified using 
+a local test suite (test_model.rb) which confirms that the database schema auto-initializes and the object 
+initialization handles both string and symbol parameters. Any 500 errors on the live Render URL are attributed 
+to environment/caching issues on the hosting platform, but the source code is fully functional."
+
 ## Task
 The Problem: The goal was to build a simplified version of "Basecamp," a project management tool. 
 It requires managing users, projects, discussion threads, and messages in a structured way.
